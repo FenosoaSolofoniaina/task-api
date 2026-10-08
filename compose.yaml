@@ -1,8 +1,11 @@
 services:
+
   api:
     build: .
-    container_name: fast-api-container
+    container_name: task-api
     ports:
       - "8000:8000"
-    environment:
-      APP_NAME: "Fenosoa API"
+
+  redis:
+    image: redis:7-alpine
+    container_name: task-redis
