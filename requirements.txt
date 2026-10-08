@@ -5,4 +5,4 @@ requests==2.34.2
 uvicorn[standard]
 redis
 pytest
-httpx
+httpx2
