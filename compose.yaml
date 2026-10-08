@@ -1,0 +1,8 @@
+services:
+  api:
+    build: .
+    container_name: fast-api-container
+    ports:
+      - "8000:8000"
+    environment:
+      APP_NAME: "Fenosoa API"
