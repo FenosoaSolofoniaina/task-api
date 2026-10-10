@@ -1,11 +1,6 @@
 from fastapi import FastAPI
-from pydantic import BaseModel
 
-
-class Task(BaseModel) :
-    id: int
-    title: str
-    completed: bool
+from app.routers.tasks import task_router
 
 
 
@@ -15,25 +10,11 @@ app = FastAPI(
     version="1.0.0"
 )
 
-tasks:list[Task] = [
-    Task(id=0, title="Eat", completed=True),
-    Task(id=1, title="Code", completed=False),
-    Task(id=2, title="Sleep", completed=False),
-    Task(id=3, title="Repeat", completed=True),
-]
-
-
-@app.get('/health')
+@app.get('/health', description="Test if app is OK and running")
 def healthy() -> dict[str, str]:
     """ """
 
     return { "message": "Everything is OK" }
 
 
-@app.get('/tasks')
-def get_tasks() -> list[Task] :
-    """ """
-
-    global tasks
-    
-    return tasks
+app.include_router(task_router)
