@@ -2,7 +2,6 @@ from pydantic import BaseModel
 from fastapi import APIRouter, HTTPException
 
 
-
 class Task(BaseModel) :
     id: int
     title: str
@@ -18,6 +17,7 @@ tasks:list[Task] = [
     Task(id=4, title="Repeat", completed=True),
 ]
 
+
 @task_router.get('/lists', description='Get List of tasks')
 def get_tasks() -> list[Task] :
     """ """
@@ -26,7 +26,7 @@ def get_tasks() -> list[Task] :
     
     return tasks
 
-
+ 
 @task_router.get('/id/{id}', description='Get a task by a specific `id`')
 def get_task_by_id(id: int) -> Task :
     """ """
@@ -41,5 +41,68 @@ def get_task_by_id(id: int) -> Task :
             status_code=404,
             detail="Task not found"
         )
+
+    return current_task
+
+
+@task_router.post('/add/', description='Add a new task')
+def add_task(title: str, completed: bool) -> Task :
+    """ """
+
+    global tasks
+
+    new_task = Task(id=len(tasks) + 1, title=title, completed=completed)
+    tasks.append(new_task)
+
+    return new_task
+
+
+@task_router.put('/update/id/{id}', description='Update a task by specifing `id`')
+def add_task(id: int,
+             title: str | None = None,
+             completed: bool | None = None) -> Task :
+    """ """
+
+    global tasks
+
+    if title is None and completed is None :
+        raise HTTPException(
+            status_code=501,
+            detail="At least `title` or `completed` must have value"
+        )
+
+    current_task = next((task for task in tasks if task.id == id),
+                            None)
+
+    if current_task is None :
+        raise HTTPException(
+            status_code=404,
+            detail="Task not found"
+        )
+
+    if title is not None :
+        current_task.title = title
+    if completed is not None :
+            current_task.completed = completed
+
+    return current_task
+
+
+@task_router.delete('/delete/id/{id}', description='Remove a task by specifing `id`')
+def add_task(id: int) -> Task :
+    """ """
+
+    global tasks
+
+    current_task = next((task for task in tasks if task.id == id),
+                            None)
+
+    if current_task is None :
+        raise HTTPException(
+            status_code=404,
+            detail="Task not found"
+        )
+
+    tasks.remove(current_task)
 
     return current_task
