@@ -18,6 +18,7 @@ tasks:list[Task] = [
 ]
 
 
+# ========================================== GET ========================================== #
 @task_router.get('/lists', description='Get List of tasks')
 def get_tasks() -> list[Task] :
     """ """
@@ -45,22 +46,31 @@ def get_task_by_id(id: int) -> Task :
     return current_task
 
 
+# ========================================== POST ========================================== #
 @task_router.post('/add/', description='Add a new task')
-def add_task(title: str, completed: bool) -> Task :
+def add_task(title: str | None = None,
+             completed: bool | None = None) -> Task :
     """ """
 
     global tasks
 
+    if title is None or completed is None :
+        raise HTTPException(
+            status_code=400,
+            detail="Value `title` and `completed` must be specified"
+        )
+    
     new_task = Task(id=len(tasks) + 1, title=title, completed=completed)
     tasks.append(new_task)
 
     return new_task
 
 
+# ========================================== PUT(update) ========================================== #
 @task_router.put('/update/id/{id}', description='Update a task by specifing `id`')
-def add_task(id: int,
-             title: str | None = None,
-             completed: bool | None = None) -> Task :
+def update_task_by_id(id: int,
+                      title: str | None = None,
+                      completed: bool | None = None) -> Task :
     """ """
 
     global tasks
@@ -88,8 +98,9 @@ def add_task(id: int,
     return current_task
 
 
+# ========================================== DELETE ========================================== #
 @task_router.delete('/delete/id/{id}', description='Remove a task by specifing `id`')
-def add_task(id: int) -> Task :
+def remove_task_by_id(id: int) -> Task :
     """ """
 
     global tasks
