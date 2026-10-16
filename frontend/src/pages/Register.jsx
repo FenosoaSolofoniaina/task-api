@@ -83,6 +83,13 @@ function BackToLoginForm() {
 
 function RegisterPage() {
 
+    function sendRegisterForm(event) {
+        event.preventDefault();
+        event.stopPropagation();
+
+        alert('Register done');
+    }
+
     const personalFormStructures = [
         {
             "id": "first-name",
@@ -164,7 +171,7 @@ function RegisterPage() {
                 <CustomH2MediumTitle>
                     Créér un nouveau compte
                 </CustomH2MediumTitle>
-                <form action="" method="post">
+                <form method="post" onSubmit={sendRegisterForm}>
                     <PersonalRegisterForm personalForms={personalFormStructures} 
                                           listCountries={countries} />
                     <AccountRegisterForm accountForms={accountFormStructures} />

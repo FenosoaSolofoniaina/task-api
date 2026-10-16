@@ -1,4 +1,4 @@
-export function CustomBlueInput({ id, type, placeholder, title, required, children }) {
+export function CustomBlueInput({ id, ref, type, placeholder, title, required, children }) {
 
     return (
         <div className="flex flex-col items-start my-[1em]">
@@ -7,6 +7,7 @@ export function CustomBlueInput({ id, type, placeholder, title, required, childr
                 {children}
             </label>
             <input type={type}
+                    ref={ref}
                     name={id}
                     placeholder={placeholder}
                     id={id}

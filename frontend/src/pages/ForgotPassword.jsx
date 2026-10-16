@@ -44,6 +44,13 @@ function BackToLoginForm() {
 
 function ForgotPasswordPage() {
 
+    function searchIdentity(event) {
+        event.preventDefault();
+        event.stopPropagation();
+
+        alert('Searching...')
+    }
+
     const forgotPasswordStructures = [
         {
             "id": "identity",
@@ -61,7 +68,7 @@ function ForgotPasswordPage() {
                 <CustomH2MediumTitle>
                     Chercher votre compte sur Task Manager App
                 </CustomH2MediumTitle>
-                <form method="POST" >
+                <form method="POST" onSubmit={searchIdentity} >
                     <ForgotPasswordForm forgotPasswordForms={forgotPasswordStructures} />
                     <CustomBlueSubmitButton>
                         Rechercher

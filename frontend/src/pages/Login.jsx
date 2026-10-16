@@ -1,3 +1,5 @@
+import { useRef } from "react";
+
 import { CustomBlueLink } from "../components/Ancres";
 import { CustomBlueInput } from "../components/Inputs";
 import { CustomBlueSubmitButton } from "../components/Buttons";
@@ -10,13 +12,15 @@ function LoginForm({ loginForms }) {
     return (
         <>
             {
-                loginForms.map(loginItem => <CustomBlueInput key={loginItem.id}
-                                                                      id={loginItem.id}
-                                                                      type={loginItem.type}
-                                                                      placeholder={loginItem.placeholder}
-                                                                      title={loginItem.title} >
-                                                            {loginItem.text}
-                                                        </CustomBlueInput>
+                loginForms.map(loginItem => <CustomBlueInput
+                            key={loginItem.id}
+                            ref={loginItem.ref}
+                            id={loginItem.id}
+                            type={loginItem.type}
+                            placeholder={loginItem.placeholder}
+                            title={loginItem.title} >
+                        {loginItem.text}
+                    </CustomBlueInput>
                 )
             }
         </>
@@ -59,9 +63,23 @@ function CreateNewAccount() {
 
 function LoginPage() {
 
+    const identityRef = useRef(null);
+    const passwordRef = useRef(null);
+
+    function sendLoginForm(event) {
+        event.preventDefault();
+        event.stopPropagation();
+
+        console.log("Formulaire envoyée :");
+        console.log(`Identifiant : ${identityRef.current.value}`);
+        console.log(`Mot de passe : ${passwordRef.current.value}`);
+
+    }
+
     const loginFormStructures = [
         {
             "id": "identity",
+            "ref": identityRef,
             "type": "text",
             "placeholder": "",
             "title": "Identifiant",
@@ -69,6 +87,7 @@ function LoginPage() {
         },
         {
             "id": "password",
+            "ref": passwordRef,
             "type": "password",
             "placeholder": "",
             "title": "Mot de passe",
@@ -83,7 +102,8 @@ function LoginPage() {
                 <CustomH2MediumTitle>
                     Se connecter à Task Manager App
                     </CustomH2MediumTitle>
-                <form method="POST">
+                <form method="POST"
+                      onSubmit={sendLoginForm} >
                     <LoginForm loginForms={loginFormStructures} />
                     <CustomBlueSubmitButton>
                         Se connecter
