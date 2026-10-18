@@ -8,7 +8,26 @@ services:
     volumes:
       - ./frontend:/app
       - frontend_node_modules:/app/node_modules
+    networks:
+      - task-manager-net
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+      - db-data:/app/data
+    command: uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload
+    networks:
+      - task-manager-net
 
 
 volumes:
   frontend_node_modules:
+  db-data:
+
+networks:
+  task-manager-net:
