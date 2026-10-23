@@ -7,12 +7,18 @@ import { CustomH2MediumTitle, CustomErrorTitle } from "../components/Titles";
 
 
 
-function LoginForm({ loginError, loginForms, references, onSubmit }) {
+function LoginForm({ isUserNotAuth, isTooManyRequest, loginForms, references, onSubmit }) {
+    /*
+
+    */
 
     return (
         <form onSubmit={onSubmit} >
             {
-                loginError && <LoginError />
+                isUserNotAuth && <UserNotAuthentifiedError />
+            }
+            {
+                isTooManyRequest && <TooManyRequestError />
             }
             {
                 loginForms.map( (loginItem, index) => <CustomBlueInput
@@ -36,7 +42,9 @@ function LoginForm({ loginError, loginForms, references, onSubmit }) {
 
 
 function ForgotPassword() {
-
+    /*
+    
+    */
     const textLink = "Mot de passe oublié ?";
 
     return (
@@ -51,6 +59,9 @@ function ForgotPassword() {
 
 
 function CreateNewAccount() {
+    /*
+
+    */
 
     const textLink = "Créér un nouveau compte";
 
@@ -68,8 +79,10 @@ function CreateNewAccount() {
 }
 
 
-function LoginError() {
+function UserNotAuthentifiedError() {
+    /*
 
+    */
     return (
         <CustomErrorTitle >
             Identifiant ou mot de passe incorrecte
@@ -78,16 +91,36 @@ function LoginError() {
 }
 
 
+function TooManyRequestError() {
+    /*
+
+    */
+    return (
+        <CustomErrorTitle >
+            Trop de requêtes sont en cours de traitements. Veuillez réessayer plus tard ou rafraîchir la page.
+        </CustomErrorTitle>
+    );
+}
+
+
 function LoginPage() {
+    /*
+
+    */
 
     // ================================ USES ================================ //
     const identityRef = useRef(null);
     const passwordRef = useRef(null);
     const [loginFormStructure, setLoginFormStructure] = useState(null);
-    const [hasLoginError, setHasLoginError] = useState(false);
+    const [isUserNotAuth, setIsUserNotAuth] = useState(false);
+    const [isTooManyRequest, setIsTooManyRequest] = useState(false);
+    
 
     // ================================ HANDLE SUBMIT ================================ //
     async function sendLoginForm(event) {
+        /*
+        
+        */
 
         event.preventDefault();
 
@@ -100,16 +133,23 @@ function LoginPage() {
                     method:"POST",
                     body: JSON.stringify({
                         "identity": identityRef.current.value,
-                        "password": passwordRef.current.value
+                        "password": passwordRef.current.value,
+                        "timestamp": Math.floor(Date.now() / 1000)
                     }),
                     headers: { 'Content-Type': 'application/json' }
                 }
             );
-            if(!response.ok) {
+            // Error when sending request
+            if(response.status == 429) {
+                setIsTooManyRequest(true)
+            }
+            else if (response.status == 200) {
+                const authData = await response.json();
+                setIsUserNotAuth(!authData.authenticate)
+            }
+            else {
                 throw new Error(`HTTP error: Failed to send request from "${endPointUrl}"`);
             }
-            const authData = await response.json();
-            setHasLoginError(!authData.authenticate)
         }
         catch (err) { console.error(err) }
 
@@ -147,7 +187,8 @@ function LoginPage() {
                     loginFormStructure &&
                     <>
                         <LoginForm loginForms={loginFormStructure}
-                                loginError={hasLoginError}
+                                isUserNotAuth={isUserNotAuth}
+                                isTooManyRequest={isTooManyRequest}
                                 references={[identityRef, passwordRef]}
                                 onSubmit={sendLoginForm} />
                     </>
