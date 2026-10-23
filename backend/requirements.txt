@@ -6,3 +6,5 @@ uvicorn[standard]==0.54.0
 httpx2==2.13.1
 sqlalchemy==2.1.4
 pwdlib[argon2]==0.3.1
+PyJWT==2.15.1
+pydantic-settings
