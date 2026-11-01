@@ -1,11 +1,18 @@
-from pydantic import BaseModel
-from fastapi import APIRouter, Header, HTTPException, status, Request
-from datetime import datetime as dt, timedelta, timezone
+import json
+from typing import Annotated
 from pwdlib import PasswordHash
-import jwt
+from fastapi import APIRouter, Request
+from fastapi import status
+from fastapi import Header, Body
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
 from src.config import settings
-from src.security.rate_limit import check_rate_limit
+from src.security import check_rate_limit
+from src.schemas import LoginAuthInput, LoginAuthOutput
+from src.exceptions import RequestHeaderException, DataBaseException
+from src.models import UserAccount, UserSession
+from src.database import SessionLocal
+
 
 
 password_hasher = PasswordHash.recommended()
@@ -16,126 +23,85 @@ login_router = APIRouter(
     tags=['Login']
 )
 
-
-# ============================================ FORM STRUCTURE ============================================ #
-class LoginInputForm(BaseModel) :
-    id: str
-    type: str
-    placeholder: str
-    title: str
-    text: str
-    required: bool
-
-
+# ============================================ ENDPOINTS ============================================ #
+# =========================================================
+# FORM STRUCTURE
+# =========================================================
 @login_router.get(
     '/forms',
+    summary="Login Forms template",
     description="Get the form template of the Task Manager App"
 )
-def get_login_forms() -> list[LoginInputForm]:
+def get_forms_template() -> list[dict]:
     """ """
-    
-    return [
-        {
-            "id": "identity",
-            "type": "text",
-            "placeholder": "",
-            "title": "Identifiant",
-            "text": "Identifiant",
-            "required": True,
-        },
-        {
-            "id": "password",
-            "type": "password",
-            "placeholder": "",
-            "title": "Mot de passe",
-            "text": "Mot de passe",
-            "required": True,
-        },
-    ]
+
+    with open(settings.PROJECT_JSON_DIR / "loginForms.json", 'r') as json_file :
+        return json.load(json_file)
 
 
-# ============================================ AUTHENTIFICATION ============================================ #
-class UserAuthInput(BaseModel) :
-    identity: str
-    password: str
-    timestamp: int
 
-
-class UserAuthResponse(BaseModel) :
-    authenticate: bool
-    user_id: int | None = None
-    access_token: str | None = None
-    expire_at: int | None = None
-    timestamp: int
-
-
+# =========================================================
+# AUTHENTIFICATION
+# =========================================================
 @login_router.post(
-        '/auth',
-        description="User authentification")
+    '/auth',
+    summary="Authentification",
+    description="User authentification using `payload`"
+)
 def user_authentificate(
     request: Request,
-    payload: UserAuthInput,
+    payload: Annotated[
+        LoginAuthInput,
+        Body()
+    ],
     content_type: str = Header(..., alias='Content-Type')
-) -> UserAuthResponse:
+) -> LoginAuthOutput:
     
     """ """
 
     check_rate_limit(request)
 
-    response = UserAuthResponse(authenticate=False, timestamp=payload.timestamp)
-
-    users_identity = [
-        {
-            "user_id": 100,
-            "identity": "john.doe",
-            "password_hashed": password_hasher.hash("myNameIsJohn2e")
-        },
-        {
-            "user_id": 101,
-            "identity": "maire.pipeline",
-            "password_hashed": password_hasher.hash("marieIssoCut3")
-        }
-    ]
+    result = LoginAuthOutput()
 
     if content_type != "application/json" :
-        raise HTTPException(
+        raise RequestHeaderException(
             status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
-            detail="Request media type is not acceptable"
+            code="UNSUPPORTED_MEDIA_TYPE",
+            message="Request media type is not acceptable"
         )
 
-    current_user = next(
-        (user for user in users_identity if (
-                user['identity'] == payload.identity and 
-                password_hasher.verify(payload.password, user['password_hashed'])
-            )
-        ),
-        None
-    )
+    with SessionLocal() as session :
+        user_account = UserAccount.get_user_by_identity(session=session,
+                                                        identity=payload.identity)
 
-    if current_user is not None :
+        if user_account and password_hasher.verify(payload.password, user_account.password_hashed) :
+            try :
+                user_session = UserSession.create_session(session=session, account=user_account)
+                result.success = True
+                result.response = {
+                    'access_token': user_session.access_token,
+                    'refresh_token': user_session.refresh_token,
+                    'token_type': user_session.token_type
+                }
+            except IntegrityError :
+                    raise DataBaseException(
+                        status_code=status.HTTP_409_CONFLICT,
+                        code="DUPLICATE_ERROR",
+                        message="The user could not be created because a database constraint was violated."
+                    ) from None
+            
+            except SQLAlchemyError :
+                raise DataBaseException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    code="DATABASE_ERROR",
+                    message="A database error occurred."
+                ) from None
 
-        now_ = dt.now(tz=timezone.utc)
-        expire = int((now_ + timedelta(hours=settings.TOKEN_TTL)).timestamp())
-        user_id = current_user['user_id']
-        
-        # Generate token
-        token = jwt.encode(
-            payload={
-                "sub": user_id,
-                "iat": now_,
-                "exp": expire
-            },
-            key=settings.JWT_SECRET_KEY,
-            algorithm=settings.JWT_ALGORITHM,
-        )
 
-        # Generate response
-        response = UserAuthResponse(
-            authenticate=True,
-            user_id=user_id,
-            access_token=token,
-            expire_at=expire,
-            timestamp=payload.timestamp
-        )
+        else :
+            result.error = {
+                'code': 'AUTHENTIFICATION_ERROR',
+                'message': 'Account not found or password not correct',
+            }    
 
-    return response
+        return result

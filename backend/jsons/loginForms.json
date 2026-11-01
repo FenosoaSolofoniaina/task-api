@@ -1,0 +1,18 @@
+[
+    {
+        "id": "identity",
+        "type": "text",
+        "placeholder": "",
+        "title": "Identifiant",
+        "text": "Identifiant",
+        "required": true
+    },
+    {
+        "id": "password",
+        "type": "password",
+        "placeholder": "",
+        "title": "Mot de passe",
+        "text": "Mot de passe",
+        "required": true
+    }
+]

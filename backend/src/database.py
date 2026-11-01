@@ -1,20 +1,20 @@
-from sqlalchemy import create_engine, event
+from sqlalchemy import event
+from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, DeclarativeBase
 
-from src.config import PROJECT_DIR, DB_NAME
+from src.config import settings
 
 
-DATA_DIR = PROJECT_DIR / "data"
-DATA_DIR.mkdir(parents=True, exist_ok=True)
 
 engine = create_engine(
-    url=f"sqlite:///{DATA_DIR / DB_NAME}",
+    url=settings.DB_PATH,
     connect_args={"check_same_thread": False}
 )
 
 SessionLocal = sessionmaker(
     bind=engine,
-    autocommit=False
+    autocommit=False,
+    autoflush=False
 )
 
 @event.listens_for(engine, "connect")

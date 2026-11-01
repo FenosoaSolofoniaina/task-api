@@ -1,4 +1,6 @@
 *.env
 __pycache__/
 .pytest_cache
-data/src/*.db
+data/*.db
+queries/
+test.py
