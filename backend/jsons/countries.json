@@ -1,0 +1,27 @@
+[
+    {
+        "id": 1,
+        "name": "Madagascar",
+        "abbr": "MG"
+    },
+    {
+        "id": 2,
+        "name": "France",
+        "abbr": "FR"
+    },
+    {
+        "id": 3,
+        "name": "Canada",
+        "abbr": "CA"
+    },
+    {
+        "id": 4,
+        "name": "Australie",
+        "abbr": "AU"
+    },
+    {
+        "id": 5,
+        "name": "Chine",
+        "abbr": "CN"
+    }
+]

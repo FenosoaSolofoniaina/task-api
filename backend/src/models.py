@@ -9,7 +9,7 @@ from sqlalchemy.orm import Mapped, Session
 from sqlalchemy.orm import mapped_column, relationship
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
-from src.database import Base, engine
+from src.database import Base
 from src.jwt_token import encode_token
 
 
@@ -376,8 +376,3 @@ class UserRole(Base) :
         """ """
 
         return session.get(cls, id)
-
-
-
-Base.metadata.drop_all(bind=engine)
-Base.metadata.create_all(bind=engine)

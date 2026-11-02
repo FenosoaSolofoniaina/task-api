@@ -1,0 +1,14 @@
+[
+    {
+        "id": 10,
+        "type": "user"
+    },
+    {
+        "id": 20,
+        "type": "superuser"
+    },
+    {
+        "id": 30,
+        "type": "admin"
+    }
+]
