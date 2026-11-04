@@ -1,4 +1,4 @@
-function FooterPage() {
+export function FooterLayout() {
 
     return (
         <footer className="flex flex-row justify-between gap-x-[3em] font-medium text-dark-800 py-[2em] px-[1em]" >
@@ -15,5 +15,3 @@ function FooterPage() {
         </footer>
     );
 }
-
-export default FooterPage;

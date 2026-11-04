@@ -1,83 +1,80 @@
-import { CustomBlueLink } from "../components/Ancres";
-import { CustomBlueInput } from "../components/Inputs";
-import { CustomBlueSubmitButton } from "../components/Buttons";
+import { useState } from "react";
+
 import { CustomH2MediumTitle } from "../components/Titles";
 
+import { BodyLayout, AccountOption } from "../layouts/Body";
+import { FooterLayout } from '../layouts/Footer';
+import { HeaderLayout } from '../layouts/Header';
+import { FormLayout } from "../layouts/Form";
 
 
-function ForgotPasswordForm({ forgotPasswordForms }) {
 
+function ForgotPasswordPage() {
+    /*
+
+    */
+
+    const [identity, setIdentity] = useState('');
+
+    const forgotPasswordFormStrucutres = [
+        {
+            format: "input",
+            attributes : {
+                id: "identity",
+                type: "text",
+                title: "Votre identifiant",
+                value: identity,
+                required: true,
+                onChange: (e) => setIdentity(e.target.value),
+            },
+            text:"Identifiant *"
+        },
+        {
+            format: "submit",
+            attributes: {
+                title: "Rechercher votre compte"
+            },
+            text: "Rechercher"
+        }
+    ];
+    
+
+    // ================================ HANDLE SUBMIT ================================ //
+    async function searchIdentity(event) {
+        /*
+        
+        */
+
+        event.preventDefault();
+        console.log(`Try to find account with identity "${identity}"`)
+
+    }
+
+    // ================================ RENDER ================================ //
     return (
-        <>
-            {
-                forgotPasswordForms.map(loginItem => <CustomBlueInput key={loginItem.id}
-                                                                      id={loginItem.id}
-                                                                      type={loginItem.type}
-                                                                      placeholder={loginItem.placeholder}
-                                                                      title={loginItem.title} >
-                                                            {loginItem.text}
-                                                        </CustomBlueInput>
-                )
-            }
+        <> 
+            <HeaderLayout />
+            
+            <BodyLayout>
+                <CustomH2MediumTitle>
+                    Mot de passe oublié ?
+                </CustomH2MediumTitle>
+                <FormLayout fields={forgotPasswordFormStrucutres}
+                            onSubmit={searchIdentity} />
+                <AccountOption linkOption={
+                    {
+                        "href": '/login',
+                        "text": "Se connecter"
+                    }
+                } >
+                    Vous avez déjà un compte ?
+                </AccountOption>
+            </BodyLayout>
+
+            <FooterLayout />
         </>
     );
 }
 
-
-function BackToLoginForm() {
-
-    const textLink = "connection";
-
-    return (
-        <div className="flex flex-row justify-center items-center m-y-[1em]" >
-            <p>
-                Retourner en page de
-                <CustomBlueLink hrefLink="/login" 
-                                title={textLink} >
-                    {textLink}
-                </CustomBlueLink>
-            </p>
-        </div>
-    );
-}
-
-
-function ForgotPasswordPage() {
-
-    function searchIdentity(event) {
-        event.preventDefault();
-        event.stopPropagation();
-
-        alert('Searching...')
-    }
-
-    const forgotPasswordStructures = [
-        {
-            "id": "identity",
-            "type": "text",
-            "placeholder": "",
-            "title": "Identifiant",
-            "text": "Identifiant"
-        }
-    ];
-
-
-    return (
-        <div className="flex flex-row justify-center" >
-            <div className="flex flex-col text-center border border-1 border-[#086288] rounded-[1em] bg-white w-[50%] p-[3em] gap-y-[2em]" >
-                <CustomH2MediumTitle>
-                    Chercher votre compte sur Task Manager App
-                </CustomH2MediumTitle>
-                <form method="POST" onSubmit={searchIdentity} >
-                    <ForgotPasswordForm forgotPasswordForms={forgotPasswordStructures} />
-                    <CustomBlueSubmitButton>
-                        Rechercher
-                    </CustomBlueSubmitButton>
-                </form>
-                <BackToLoginForm />
-            </div>
-        </div>
-    );
-}
 
 export default ForgotPasswordPage; 

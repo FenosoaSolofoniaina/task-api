@@ -1,4 +1,4 @@
-function HeaderPage() {
+export function HeaderLayout() {
 
     return (
         <header className="flex flex-row justify-around py-[2em]" >
@@ -8,5 +8,3 @@ function HeaderPage() {
         </header>
     );
 }
-
-export default HeaderPage;
