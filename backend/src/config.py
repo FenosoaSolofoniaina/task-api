@@ -11,7 +11,11 @@ _DATA_DIR.mkdir(parents=True, exist_ok=True)
 
 class Settings(BaseSettings) :
 
-    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore"
+    )
 
     #
     @property
@@ -19,8 +23,8 @@ class Settings(BaseSettings) :
         return _PROJECT_DIR / "jsons"
     
     # TOKEN CONFIGURATION
-    REFRESH_TOKEN_TTL: int = Field(validation_alias='REFRESH_TOKEN_TTL_DAYS')
-    ACCESS_TOKEN_TTL: int = Field(validation_alias='ACCESS_TOKEN_TTL_HOURS')
+    #REFRESH_TOKEN_TTL: int = Field(validation_alias='REFRESH_TOKEN_TTL_DAYS')
+    ACCESS_TOKEN_TTL: int = Field(validation_alias='ACCESS_TOKEN_TTL_MINUTES')
     JWT_SECRET_KEY: str = Field(validation_alias='JWT_SECRET_KEY')
     JWT_ALGORITHM: str = Field(validation_alias='JWT_ALGORITHM')
     
@@ -36,7 +40,9 @@ class Settings(BaseSettings) :
     DURATION_ATTEMPTS_SECONDS: int = Field(validation_alias='DURATION_ATTEMPTS_SECONDS')
 
     # Allow Origins
-    FRONTENT_URL:str = Field(validation_alias='FRONTEND_URL')
+    FRONTEND_URL:str = Field(validation_alias='FRONTEND_URL')
+
+    ROUT_PREFIX: str = "/api/v1"
 
     
 

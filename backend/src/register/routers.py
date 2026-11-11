@@ -1,19 +1,19 @@
 import datetime as dt
 from typing import Annotated
 from fastapi import APIRouter
-from fastapi import Body, Header
+from fastapi import Body, Header, Depends
 from fastapi import status
+from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
-from pwdlib import PasswordHash
 
-from src.database import SessionLocal
 from src.models import UserInfo, UserAccount
-from src.schemas import RegisterMeDataInput, RegisterDataOutput, RegisterAccountInput
 from src.exceptions import DataBaseException, RequestHeaderException
+from src.database import get_db_session
+from src.security import hash_password
+
+from src.register.schema import RegisterMeSchema, RegisterDataOutput, RegisterAccountSchema
 
 
-
-password_hasher = PasswordHash.recommended()
 
 # ============================================ ROUTER ============================================ #
 register_router = APIRouter(
@@ -32,10 +32,17 @@ register_router = APIRouter(
     description="Register user into database with `payload` provided",
 )
 def register_user(
-    payload: Annotated[
-        RegisterMeDataInput,
-        Body(examples=[{'firstname': 'John','lastname': 'Doe','sexe': 'M','birth': '2000-01-01','country_id': 0}])
-    ],
+    payload: Annotated[RegisterMeSchema, Body(
+        examples=[{
+            'firstname': 'John',
+            'lastname': 'Doe',
+            'sexe': 'M',
+            'birth': '2000-01-01',
+            'email': 'john.doe@gmail.com',
+            'country_id': 0
+        }]
+    )],
+    session: Annotated[Session, Depends(get_db_session)],
     content_type: str = Header(..., alias='Content-Type'),
 ) -> RegisterDataOutput :
     """ """
@@ -54,15 +61,15 @@ def register_user(
 
     try :
         # 2. Insérer dans la BDD
-        with SessionLocal() as session :
-            result = new_user.create_user(session=session)
-            response.success = True
-            response.response = result
+       
+        result = new_user.create_user(session=session)
+        response.success = True
+        response.response = result
 
         return response
 
     except IntegrityError as e:
-        print(e.orig)
+        session.rollback()
         raise DataBaseException(
             status_code=status.HTTP_409_CONFLICT,
             code="DUPLICATE_ERROR",
@@ -70,6 +77,7 @@ def register_user(
         ) from None
 
     except SQLAlchemyError :
+        session.rollback()
         raise DataBaseException(
             status_code=status.HTTP_409_CONFLICT,
             code="DATABASE_ERROR",
@@ -87,10 +95,14 @@ def register_user(
     description="Register user account into database with `payload` provided",
 )
 def register_account(
-    payload: Annotated[
-        RegisterAccountInput,
-        Body(examples=[{'user_id': 0,'identity': 'john.doe2000','password': 'myPassw0rdIsSiMPle',}])
-    ],
+    payload: Annotated[RegisterAccountSchema, Body(
+        examples=[{
+            'user_id': 0,
+            'identity': 'john.doe2000',
+            'password': 'myPassw0rdIsSiMPle'
+        }]
+    )],
+    session: Annotated[Session, Depends(get_db_session)],
     content_type: str = Header(..., alias='Content-Type'),
 ) -> RegisterDataOutput :
     """ """
@@ -104,42 +116,46 @@ def register_account(
             message="Request media type is not acceptable"
         )
 
-    with SessionLocal() as session :
 
-        # 1. Vérifier que le profil associé existe.
-        if not UserInfo.get_user_by_id(session=session, id=payload.user_id) :
-            raise DataBaseException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                code="MISSING_ERROR",
-                message="The profil associated is not found."
-            )
-        
-        new_user_account = UserAccount(
-            user_id=payload.user_id,
-            identity=payload.identity,
-            password_hashed=password_hasher.hash(payload.password),
-            last_log=dt.date.today()
+    # 1. Vérifier que le profil associé existe.
+    if not UserInfo.get_user_by_id(session=session, id=payload.user_id) :
+        raise DataBaseException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            code="MISSING_ERROR",
+            message="The profil associated is not found."
         )
 
-        try :
-            # 2. Insérer dans la BDD
-            result = new_user_account.create_account(session=session)
-            response.success = True
-            response.response = result
-    
-            return response
-    
-        except IntegrityError :
-            raise DataBaseException(
-                status_code=status.HTTP_409_CONFLICT,
-                code="DUPLICATE_ERROR",
-                message="The identity already exist."
-            ) from None
-    
-        except SQLAlchemyError :
-            raise DataBaseException(
-                status_code=status.HTTP_409_CONFLICT,
-                code="DATABASE_ERROR",
-                message="A database error occurred."
-            ) from None
+    # Créér le profil
+    new_user_account = UserAccount(
+        user_id=payload.user_id,
+        identity=payload.identity,
+        password_hashed=hash_password(payload.password),
+        last_log=dt.date.today()
+    )
+
+    try :
+        # 2. Insérer dans la BDD
+        result = new_user_account.create_account(session=session)
+        response.success = True
+        response.response = result
+
+        return response
+
+    except IntegrityError :
+        session.rollback()
+        
+        raise DataBaseException(
+            status_code=status.HTTP_409_CONFLICT,
+            code="DUPLICATE_ERROR",
+            message="The user_id mismatch with identity ."
+        ) from None
+
+    except SQLAlchemyError :
+        session.rollback()
+
+        raise DataBaseException(
+            status_code=status.HTTP_409_CONFLICT,
+            code="DATABASE_ERROR",
+            message="A database error occurred."
+        ) from None
 

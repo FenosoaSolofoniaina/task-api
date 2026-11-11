@@ -11,15 +11,16 @@ from src.exceptions import DataValueException
 # ================================================================================ #
 # Register account and profil
 # ================================================================================ #
-class RegisterMeDataInput(BaseModel) :
+class RegisterMeSchema(BaseModel) :
     """ """
 
     model_config = ConfigDict(extra="forbid")
 
-    firstname: str = Field(min_length=2, max_length=100, strict=True)
-    lastname: str = Field(min_length=2, max_length=100, strict=True)
+    firstname: str = Field(min_length=2, max_length=60, strict=True)
+    lastname: str = Field(min_length=2, max_length=60, strict=True)
     sexe: str = Field(min_length=1, max_length=1, strict=True)
     birth: dt.date = Field()
+    email: str = Field(min_length=1, max_length=60, strict=True)
     country_id: int = Field(gt=0, lt=300, strict=True)
 
     @field_validator("birth")
@@ -54,7 +55,7 @@ class RegisterMeDataInput(BaseModel) :
 
 
 
-class RegisterAccountInput(BaseModel) :
+class RegisterAccountSchema(BaseModel) :
     """ """
 
     model_config = ConfigDict(extra="forbid")
@@ -66,29 +67,6 @@ class RegisterAccountInput(BaseModel) :
 
 
 class RegisterDataOutput(BaseModel) :
-    """ """
-
-    success: bool = False
-    response: dict[str, Any] | None = None
-    error: dict[str, Any] | None = None
-
-
-
-# ================================================================================ #
-# Login account
-# ================================================================================ #
-class LoginAuthInput(BaseModel) :
-    """ """
-
-    model_config = ConfigDict(extra="forbid")
-
-    identity: str = Field(min_length=5, max_length=50, strict=True)
-    password: str = Field(min_length=8, max_length=30, strict=True)
-    timestamp: int = Field(gt=10000, strict=True)
-
-
-
-class LoginAuthOutput(BaseModel) :
     """ """
 
     success: bool = False

@@ -51,6 +51,26 @@ class RequestHeaderException(APIException) :
         )
 
 
+class RessourceNotFoundException(APIException) :
+    """ """
+
+
+    def __init__(
+        self,
+        status_code: int,
+        code: str,
+        message: str,
+    ) -> None :
+        """ """
+
+        super().__init__(
+            status_code=status_code,
+            code=code,
+            message=message,
+            type="RESSOURCE_ERROR"
+        )
+
+
 
 class DataBaseException(APIException) :
     """ """
@@ -110,4 +130,25 @@ class ClientBehaviourException(APIException) :
             code=code,
             message=message,
             type="CLIENT_ERROR"
+        )
+
+
+
+class CredentialsException(APIException) :
+    """ """
+
+
+    def __init__(
+        self,
+        status_code: int,
+        code: str,
+        message: str,
+    ) -> None :
+        """ """
+
+        super().__init__(
+            status_code=status_code,
+            code=code,
+            message=message,
+            type="CREDENTIAL_ERROR"
         )

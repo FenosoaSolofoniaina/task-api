@@ -1,27 +1,29 @@
-from fastapi import FastAPI, APIRouter
-from fastapi import Request
+from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 
 from src.exceptions import APIException
 from src.config import settings
-from src.init_db import init_country_db, init_role_db
-from src.database import engine, Base, SessionLocal
-from src.routers.register import register_router
-from src.routers.login import login_router
+from src.init_db import initialize_database
+from src.database import SessionLocal
+
+from src.register.routers import register_router
+from src.login.routers import login_router
+from src.tasks.routers import task_router
+from src.logout.routers import logout_router
 
 
 
 # ============================================ APP ============================================ #
 app = FastAPI(
     title="Task API",
-    description="Test an API that manage tast using FastAPI",
+    description="API backend for TASK Manager APP",
     version="1.0.0"
 )
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=False,
-    allow_origins=[settings.FRONTENT_URL],
+    allow_origins=[settings.FRONTEND_URL],
     allow_methods=['GET', 'POST', 'DELETE', 'PUT'],
     allow_headers=['Content-Type', 'Accept', 'Authorization']
 )
@@ -38,15 +40,11 @@ async def api_exception_handler(
 
 
 # ============================================ INIT DATABASE ============================================ #
-Base.metadata.drop_all(bind=engine)
-Base.metadata.create_all(bind=engine)
 with SessionLocal() as session :
-    init_country_db(session)
-    init_role_db(session)
+    initialize_database(session)
     
 # ============================================ TEST APP ============================================ #
-api_router = APIRouter(prefix='/api/v1')
-@api_router.get(
+@app.get(
     '/health',
     summary="App health test",
     description="Test if app is OK and running",
@@ -58,8 +56,8 @@ def healthy() -> dict[str, str]:
 
 
 # ============================================ ROUTES ============================================ #
-api_router.include_router(register_router)
-api_router.include_router(login_router)
-
-# MAIN ROUTER
-app.include_router(api_router)
+prefix = settings.ROUT_PREFIX
+app.include_router(register_router, prefix=prefix)
+app.include_router(login_router, prefix=prefix)
+app.include_router(task_router, prefix=prefix)
+app.include_router(logout_router, prefix=prefix)

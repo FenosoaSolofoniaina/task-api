@@ -3,14 +3,12 @@
 # ===========================================
 import datetime as dt
 from typing import Any
-from sqlalchemy import String, ForeignKey, DateTime, Date, CheckConstraint, UniqueConstraint, Boolean
+from sqlalchemy import String, ForeignKey, DateTime, Date, CheckConstraint, UniqueConstraint, Boolean, Text
 from sqlalchemy import select
 from sqlalchemy.orm import Mapped, Session
 from sqlalchemy.orm import mapped_column, relationship
-from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
 from src.database import Base
-from src.jwt_token import encode_token
 
 
 # ===========================================
@@ -32,6 +30,7 @@ class UserInfo(Base) :
             "sexe",
             "birth",
             "country_id",
+            "email",
             name="check_unique_user"
         )
     )
@@ -54,6 +53,11 @@ class UserInfo(Base) :
         Date,
         nullable=False
     )
+    email: Mapped[str] = mapped_column(
+        String(100),
+        nullable=False,
+        unique=True
+    )
     created_at: Mapped[dt.datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
@@ -65,6 +69,7 @@ class UserInfo(Base) :
     )
     role_id: Mapped[int] = mapped_column(
         ForeignKey('roles.id'),
+        default=10,
         nullable=False
     )
 
@@ -85,28 +90,32 @@ class UserInfo(Base) :
         uselist=False,
         back_populates="users"
     )
+    session: Mapped["UserSession | None"] = relationship(
+            "UserSession",
+            back_populates="user",
+            uselist=False,
+            cascade="all, delete-orphan"
+        )
+    tasks: Mapped[list["TaskData"]] = relationship(
+        "TaskData",
+        uselist=True,
+        back_populates="owner",
+        cascade="all, delete-orphan"
+    )
 
     # ========================= METHODS =========================
     def create_user(self, session: Session) -> dict[str, Any] :
         """ """
-
-        try :
-            session.add(self)
-            session.commit()
-            session.refresh(self)
-
-            return {
-                'user_id': self.id,
-                'created_at': self.created_at.isoformat()
-            }
         
-        except IntegrityError :
-            session.rollback()
-            raise
+        session.add(self)
+        session.commit()
+        session.refresh(self)
 
-        except SQLAlchemyError :
-            session.rollback()
-    
+        return {
+            'user_id': self.id,
+            'created_at': self.created_at.isoformat()
+        }
+        
     
     @classmethod
     def get_user_by_id(cls: "UserInfo",
@@ -131,11 +140,6 @@ class UserAccount(Base) :
         ForeignKey('users.id', ondelete="CASCADE"),
         primary_key=True
     )
-    last_log: Mapped[dt.datetime] = mapped_column(
-        DateTime,
-        nullable=False,
-        default=dt.datetime.now
-    )
     identity: Mapped[str] = mapped_column(
         String(50),
         unique=True,
@@ -146,6 +150,11 @@ class UserAccount(Base) :
         String(255),
         nullable=False
     )
+    last_log: Mapped[dt.datetime] = mapped_column(
+        DateTime,
+        nullable=False,
+        default=dt.datetime.now
+    )
     
 
     # ========================= RELATIONS =========================
@@ -154,56 +163,30 @@ class UserAccount(Base) :
         uselist=False,
         back_populates="account"
     )
-    session: Mapped["UserSession | None"] = relationship(
-        "UserSession",
-        uselist=False,
-        back_populates="account",
-        cascade="all, delete-orphan"
-    )
 
     # ========================= METHODS =========================
-    def create_account(self, session: Session) -> dict :
+    def create_account(self, session: Session) -> dict[str, Any] :
         """ """
-
-        try :
-            session.add(self)
-            session.commit()
-            session.refresh(self)
-
-            return {
-                'uid': self.user_id,
-                'identity': self.identity,
-                'type': 'user',
-                'status': 'created'
-            }
         
-        except IntegrityError :
-            session.rollback()
-            raise
+        session.add(self)
+        session.commit()
+        session.refresh(self)
 
-        except SQLAlchemyError :
-            session.rollback()
-            raise
-
-
-    @classmethod
-    def get_user_by_identity(cls: "UserAccount",
-                             session: Session,
-                             identity: str) -> "UserAccount | None" :
-
-        return session.scalar(
-            select(UserAccount).where(UserAccount.identity == identity)
-        )
+        return {
+            'uid': self.user_id,
+            'identity': self.identity,
+            'type': 'user',
+            'status': 'created'
+        }
     
 
     @classmethod
-    def get_identity(cls: "UserAccount",
-                    session: Session,
-                    user_id: int) -> str :
-        """ """
+    def get_account_by_identity(cls: "UserAccount",
+                                session: Session,
+                                identity: str) -> "UserAccount | None" :
 
         return session.scalar(
-            select(UserAccount.identity).where(UserAccount.user_id == user_id)
+            select(UserAccount).where(UserAccount.identity == identity)
         )
 
 
@@ -218,74 +201,61 @@ class UserSession(Base) :
 
     # ========================= COLUMNS =========================
     id: Mapped[int] = mapped_column(primary_key=True)
-    account_user_id: Mapped[int] = mapped_column(
-        ForeignKey('user_accounts.user_id', ondelete="CASCADE"),
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey('users.id', ondelete="CASCADE"),
         unique=True,
         nullable=False
-    )
-    created_at: Mapped[dt.datetime] = mapped_column(
-        DateTime,
-        nullable=False,
-        default=dt.datetime.now
     )
     access_token: Mapped[str] = mapped_column(
         String(255),
         nullable=False,
         unique=True
     )
-    refresh_token: Mapped[str] = mapped_column(
-        String(255),
+    created_at: Mapped[dt.datetime] = mapped_column(
+        DateTime(timezone=True),
         nullable=False,
-        unique=True
-    )
-    token_type: Mapped[str] = mapped_column(
-        String(10),
-        default='bearer',
-        nullable=False
-    )
-    revoked: Mapped[bool] = mapped_column(
-        Boolean,
-        nullable=False,
-        default=False
+        default=lambda: dt.datetime.now(tz=dt.timezone.utc)
     )
 
     # ========================= RELATIONS =========================
-    account: Mapped["UserAccount"] = relationship(
-        "UserAccount",
-        uselist=False,
-        back_populates="session"
-    )
-
-    # ========================= RELATIONS =========================
-    @classmethod
-    def create_session(cls: "UserSession",
-                       session:Session,
-                       account: "UserAccount") -> "UserSession" :
+    user: Mapped["UserInfo"] = relationship(
+            "UserInfo",
+            uselist=False,
+            back_populates="session"
+        )
+    
+    # ========================= METHODS =========================
+    def create_session(self, session:Session) -> None :
         """ """
 
-        access_token = encode_token(account, token_type='access')
-        refresh_token = encode_token(account, token_type='refresh')
+        session.add(self)
+        session.commit()
+        session.refresh(self)
+    
 
-        new_session = cls(
-            account_user_id=account.user_id,
-            access_token=access_token,
-            refresh_token=refresh_token
+
+    # ========================= RELATIONS =========================
+    def remove_session(self, session: Session) -> dict[str, Any] :
+        
+        """ """
+    
+        session.delete(self)
+        session.commit()
+
+        return {
+            'uid': self.id,
+            'message': "Session closed and removed"
+        }
+
+
+    @classmethod
+    def get_session_by_user_id(cls,
+                               session: Session,
+                               user_id: int) -> "UserSession" :
+
+        return session.scalar(
+            select(UserSession).where(UserSession.user_id == user_id)
         )
-
-        try :
-            session.add(new_session)
-            session.commit()
-            session.refresh(new_session)
-
-            return new_session
-
-        except IntegrityError :
-            session.rollback()
-            raise
-
-        except SQLAlchemyError :
-            session.rollback()
-            raise
 
 
 
@@ -376,3 +346,46 @@ class UserRole(Base) :
         """ """
 
         return session.get(cls, id)
+
+
+
+# ===========================================
+# TASK INFO
+# ===========================================
+class TaskData(Base) :
+    """ """
+
+    # ========================= CONFIGURATIONS =========================
+    __tablename__ = "tasks"
+
+    # ========================= COLUMNS =========================
+    id: Mapped[int] = mapped_column(primary_key=True)
+    title: Mapped[str] = mapped_column(
+        String(255),
+        nullable=False,
+        unique=True
+    )
+    description: Mapped[str] = mapped_column(
+        Text,
+        nullable=True
+    )
+    created_at: Mapped[dt.datetime] = mapped_column(
+        DateTime,
+        nullable=False
+    )
+    completed: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=False
+    )
+    owner_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id"),
+        nullable=False
+    )
+
+    # ========================= RELATIONS =========================
+    owner: Mapped["UserInfo"] = relationship(
+        "UserInfo",
+        back_populates="tasks",
+        uselist=False,
+    )

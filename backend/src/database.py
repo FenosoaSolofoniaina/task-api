@@ -1,6 +1,7 @@
+from typing import Generator
 from sqlalchemy import event
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, DeclarativeBase
+from sqlalchemy.orm import sessionmaker, DeclarativeBase, Session
 
 from src.config import settings
 
@@ -28,3 +29,10 @@ def enable_foreign_keys(dbapi_connection, connection_record):
 class Base(DeclarativeBase) :
 
     pass
+
+
+
+def get_db_session() -> Generator[Session] :
+
+    with SessionLocal() as session :
+        yield session
