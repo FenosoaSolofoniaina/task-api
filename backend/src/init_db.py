@@ -1,11 +1,11 @@
 import json
 import datetime as dt
 from sqlalchemy.orm import Session
-from pwdlib import PasswordHash
 
-from src.models import Country, UserRole, UserInfo, UserAccount, TaskData
+from src.models import UserInfo, UserAccount, Country, UserRole, TaskData
 from src.config import settings
 from src.database import engine, Base
+from src.security import hash_password
 
 
 
@@ -47,8 +47,8 @@ def init_user_info_db(session: Session) -> None:
         email="john.doe@gmail.com",
         country_id=1
     )
-    session.add(new_user)
-    session.commit()
+
+    new_user.create(session=session)
 
 
 
@@ -58,10 +58,9 @@ def init_user_account_db(session: Session) -> None:
     new_account = UserAccount(
         user_id=1,
         identity="john.doe",
-        password_hashed=PasswordHash.recommended().hash("johnDoe1")
+        password_hashed=hash_password("johnDoe1")
     )
-    session.add(new_account)
-    session.commit()
+    new_account.create(session=session)
 
 
 
@@ -72,7 +71,6 @@ def init_task_db(session: Session) -> None:
         title="Eat",
         description="Eat some fruits and vegetables",
         created_at=dt.datetime.now(tz=dt.timezone.utc),
-        completed=False,
         owner_id=1
     )
     session.add(new_task)

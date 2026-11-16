@@ -1,19 +1,18 @@
 import json
+import uuid
 from typing import Annotated
-
-from fastapi import APIRouter, Request, status
+from fastapi import APIRouter, Request, status, Response
 from fastapi import Depends
-from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from src.config import settings
-from src.security import check_rate_limit, verify_password, encode_token
+from src.security import check_rate_limit, verify_password, create_access_token
 from src.exceptions import DataBaseException, RessourceNotFoundException, CredentialsException
 from src.models import UserAccount, UserSession
 from src.database import get_db_session
 
-from src.login.schema import TokenOut
+from src.login.schema import LoginRequest, LoginResponse
 
 
 
@@ -56,26 +55,44 @@ def get_forms_template() -> list[dict]:
     description="User authentification using `payload`",
     status_code=status.HTTP_201_CREATED,
 )
-def user_authentificate(
+def user_login(
+    payload: LoginRequest,
     request: Request,
-    form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
+    response: Response,
     session: Annotated[Session, Depends(get_db_session)]
-) -> TokenOut:
+) -> LoginResponse:
     
     """ """
 
     check_rate_limit(request)
+
+    result = LoginResponse()
     
     user_account = UserAccount.get_account_by_identity(session=session,
-                                                       identity=form_data.username)
+                                                       identity=payload.identity)
 
-    if user_account and verify_password(form_data.password, user_account.password_hashed):
+    if user_account and verify_password(payload.password, user_account.password_hashed):
         try :
-            access_token = encode_token(user_account.user_id)
-            new_session = UserSession(user_id=user_account.user_id, access_token=access_token)
-            new_session.create_session(session=session)
-            
-            return TokenOut(access_token=access_token)
+            session_id = uuid.uuid4()
+            access_token = create_access_token(user_id=user_account.user_id, session_id=str(session_id))
+            new_session = UserSession(
+                id=session_id,
+                user_id=user_account.user_id,
+                access_token=access_token
+            )
+            result.success = True
+            result.response = new_session.create(session=session)
+
+            response.set_cookie(
+                key="access_token",
+                value=access_token,
+                httponly=True,
+                secure=False,
+                samesite="lax",
+                max_age=settings.ACCESS_TOKEN_TTL * 60
+            )
+
+            return result
 
         except IntegrityError :
             session.rollback()
@@ -86,9 +103,8 @@ def user_authentificate(
                 message="The user could not be created because a database constraint was violated."
             ) from None
         
-        except SQLAlchemyError :
+        except SQLAlchemyError as e:
             session.rollback()
-
             raise DataBaseException(
                 status_code=status.HTTP_409_CONFLICT,
                 code="DATABASE_ERROR",

@@ -1,14 +1,26 @@
 from pydantic import BaseModel, ConfigDict
+from typing import Any
 
 
 
 # ================================================================================ #
 # Login account
 # ================================================================================ #
-class TokenOut(BaseModel) :
+class LoginRequest(BaseModel) :
     """ """
 
     model_config = ConfigDict(extra="forbid")
-    
-    access_token: str
-    token_type: str =  "bearer"
+
+    identity: str
+    password: str
+
+
+# ================================================================================ #
+# Response from login
+# ================================================================================ #
+class LoginResponse(BaseModel) :
+    """ """
+
+    success: bool = False
+    response: dict[str, Any] | None = None
+    error: dict[str, Any] | None = None

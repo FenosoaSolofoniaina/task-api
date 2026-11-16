@@ -62,7 +62,7 @@ def register_user(
     try :
         # 2. Insérer dans la BDD
        
-        result = new_user.create_user(session=session)
+        result = new_user.create(session=session)
         response.success = True
         response.response = result
 
@@ -129,13 +129,12 @@ def register_account(
     new_user_account = UserAccount(
         user_id=payload.user_id,
         identity=payload.identity,
-        password_hashed=hash_password(payload.password),
-        last_log=dt.date.today()
+        password_hashed=hash_password(payload.password)
     )
 
     try :
         # 2. Insérer dans la BDD
-        result = new_user_account.create_account(session=session)
+        result = new_user_account.create(session=session)
         response.success = True
         response.response = result
 

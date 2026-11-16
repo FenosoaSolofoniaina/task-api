@@ -1,18 +1,17 @@
 import time
 import datetime as dt
-import jwt
 from collections import defaultdict, deque
 from threading import Lock
-from typing import Any, Literal
+from typing import Any
 from fastapi import Request, status
-from pwdlib import PasswordHash
 
 from src.config import settings
 from src.exceptions import ClientBehaviourException
-from src.models import UserAccount
 
 
-
+# =========================================================
+# Maximum rate limite
+# =========================================================
 _MAX_WINDOW_ATTEMPTS = settings.MAX_ATTEMPTS
 _WINDOW_SECONDS = settings.DURATION_ATTEMPTS_SECONDS
 
@@ -53,20 +52,22 @@ def check_rate_limit(request: Request) -> None:
 
 
 
-def encode_token(
-    user_id: int,
-    token_type: Literal['access', 'refresh'] = 'access'
-) -> str:
+# =========================================================
+# Encode/decode token
+# =========================================================
+import jwt
+
+
+def create_access_token(user_id: int, session_id: str) -> str:
     """ """
 
     now_ = dt.datetime.now(tz=dt.timezone.utc)
-    #token_ttl = dt.timedelta(minutes=settings.ACCESS_TOKEN_TTL) if token_type=='access' else dt.timedelta(days=settings.REFRESH_TOKEN_TTL)
     token_ttl = dt.timedelta(minutes=settings.ACCESS_TOKEN_TTL)
     
-
     payload = {
         "sub": str(user_id),
-        "type": f"{token_type}_token",
+        "sid": session_id,
+        "type": "access_token",
         "iat": now_,
         "exp": now_ + token_ttl,
     }
@@ -80,22 +81,28 @@ def encode_token(
     return token
 
 
-
-def decode_token(token: str) -> dict[str, Any]:
+def decode_access_token(token: str, verify_exp: bool=True) -> dict[str, Any]:
     """ """
 
     decoded_token = jwt.decode(
         token,
         key=settings.JWT_SECRET_KEY,
-        algorithms=[settings.JWT_ALGORITHM]
+        algorithms=[settings.JWT_ALGORITHM],
+        options={"verify_exp": verify_exp}
     )
 
     return decoded_token
 
 
 
+# =========================================================
+# Encode/decode password
+# =========================================================
+from pwdlib import PasswordHash
+
 
 password_hasher = PasswordHash.recommended()
+
 
 def hash_password(password: str) -> str :
     """ """
@@ -103,8 +110,7 @@ def hash_password(password: str) -> str :
     return password_hasher.hash(password=password)
 
 
-
-def verify_password(password: str, password_hashed: str) -> bool :
+def verify_password(password: str, hash: str) -> bool :
     """ """
     
-    return password_hasher.verify(password, password_hashed) 
+    return password_hasher.verify(password, hash) 

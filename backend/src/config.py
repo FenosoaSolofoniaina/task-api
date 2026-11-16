@@ -23,10 +23,9 @@ class Settings(BaseSettings) :
         return _PROJECT_DIR / "jsons"
     
     # TOKEN CONFIGURATION
-    #REFRESH_TOKEN_TTL: int = Field(validation_alias='REFRESH_TOKEN_TTL_DAYS')
-    ACCESS_TOKEN_TTL: int = Field(validation_alias='ACCESS_TOKEN_TTL_MINUTES')
     JWT_SECRET_KEY: str = Field(validation_alias='JWT_SECRET_KEY')
     JWT_ALGORITHM: str = Field(validation_alias='JWT_ALGORITHM')
+    ACCESS_TOKEN_TTL: int = Field(validation_alias='ACCESS_TOKEN_TTL_MINUTES')
     
     # DATABASE CONFIGURATION
     DB_NAME: str = Field(validation_alias='SQLITE_DBNAME')

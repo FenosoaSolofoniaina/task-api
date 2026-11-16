@@ -1,5 +1,5 @@
 from typing import Annotated
-from fastapi import APIRouter, status
+from fastapi import APIRouter, status, Response
 from fastapi import Depends
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
@@ -9,7 +9,7 @@ from src.exceptions import DataBaseException
 from src.database import get_db_session
 from src.dependencies import get_current_session
 
-from src.logout.schema import LogoutOutput
+from src.logout.schema import LogoutResponse
 
 
 
@@ -26,19 +26,21 @@ logout_router = APIRouter(
 # =========================================================
 @logout_router.post(
     '/',
-    summary="Login out",
+    summary="Logout",
     description="User logged out. Session closed and removed"
 )
 def user_logout(
     current_session: Annotated[UserSession, Depends(get_current_session)],
+    response: Response,
     session: Annotated[Session, Depends(get_db_session)],
-) -> LogoutOutput:
+) -> LogoutResponse:
 
-    result = LogoutOutput()
+    result = LogoutResponse()
 
     try :
-        result.response = current_session.remove_session(session=session)
+        result.response = current_session.revoke(session=session)
         result.success = True
+        response.delete_cookie('access_token')
 
         return result
 

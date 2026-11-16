@@ -25,7 +25,8 @@ class RegisterMeSchema(BaseModel) :
 
     @field_validator("birth")
     @classmethod
-    def validate_birth(cls, value: dt.date) -> dt.date:
+    def validate_birth(cls,
+                       value: dt.date) -> dt.date:
 
         MIN_AGE = 10 # ans
         today = dt.date.today()

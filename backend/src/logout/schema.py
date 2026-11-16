@@ -8,7 +8,7 @@ from pydantic import Field
 # ================================================================================ #
 # Logout account
 # ================================================================================ #
-class LogoutOutput(BaseModel) :
+class LogoutResponse(BaseModel) :
     """ """
 
     success: bool = False

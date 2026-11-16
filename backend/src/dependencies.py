@@ -1,35 +1,46 @@
 from typing import Annotated
-from fastapi.security import OAuth2PasswordBearer
 from fastapi import status
-from fastapi import Depends
+from fastapi import Depends, Cookie
 from sqlalchemy.orm import Session
-from jwt import InvalidTokenError
+from jwt import InvalidTokenError, ExpiredSignatureError
 
-from src.config import settings
 from src.database import get_db_session
 from src.models import UserSession
-from src.security import decode_token
+from src.security import decode_access_token
 from src.exceptions import CredentialsException
 
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.ROUT_PREFIX}/login")
 
-
-async def get_current_session(
-    token: Annotated[str, Depends(oauth2_scheme)],
-    session: Annotated[Session, Depends(get_db_session)]
+def get_current_session(
+    session: Annotated[Session, Depends(get_db_session)],
+    token: str | None = Cookie(default=None, alias='access_token'),
 ) -> "UserSession" :
     """ """
 
-    try :
-        payload = decode_token(token=token)
+    if token is None :
+        raise CredentialsException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            code="AUTHENTIFICATION_ERROR",
+            message="Empty token is invalid"
+        ) from None
 
+    try :
+        payload = decode_access_token(token=token)
+
+    except ExpiredSignatureError :
+        UserSession.revoke_session_by_token(session=session, token=token)
+        raise CredentialsException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            code="AUTHENTIFICATION_ERROR",
+            message="Expired token"
+        ) from None
+    
     except InvalidTokenError :
         raise CredentialsException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        code="AUTHENTIFICATION_ERROR",
-        message="Invalide token or expired"
-    ) from None
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            code="AUTHENTIFICATION_ERROR",
+            message="Invalide token"
+        ) from None
 
 
     user_id = int(payload.get('sub'))
@@ -38,8 +49,11 @@ async def get_current_session(
         raise CredentialsException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         code="AUTHENTIFICATION_ERROR",
-        message="User_id not found"
+        message="User not found"
     ) from None
 
 
-    return UserSession.get_session_by_user_id(session=session, user_id=user_id)
+    return UserSession.get_active_session(
+        session=session,
+        user_id=user_id
+    )
