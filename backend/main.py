@@ -42,7 +42,8 @@ async def api_exception_handler(
 # ============================================ INIT DATABASE ============================================ #
 with SessionLocal() as session :
     initialize_database(session)
-    
+
+
 # ============================================ TEST APP ============================================ #
 @app.get(
     '/health',
@@ -50,6 +51,17 @@ with SessionLocal() as session :
     description="Test if app is OK and running",
 )
 def healthy() -> dict[str, str]:
+    """ """
+
+    return { "message": "Everything is OK" }
+
+
+@app.get(
+    '/countries',
+    summary="/Get list of countries",
+    description="Get list of countries inside /jsons/countries.json",
+)
+def get_countries() -> dict[str, str]:
     """ """
 
     return { "message": "Everything is OK" }

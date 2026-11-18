@@ -1,4 +1,3 @@
-import json
 import uuid
 from typing import Annotated
 from fastapi import APIRouter, Request, status, Response
@@ -8,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from src.config import settings
 from src.security import check_rate_limit, verify_password, create_access_token
-from src.exceptions import DataBaseException, RessourceNotFoundException, CredentialsException
+from src.exceptions import DataBaseException, CredentialsException
 from src.models import UserAccount, UserSession
 from src.database import get_db_session
 
@@ -23,29 +22,6 @@ login_router = APIRouter(
 )
 
 # ============================================ ENDPOINTS ============================================ #
-# =========================================================
-# FORM STRUCTURE
-# =========================================================
-@login_router.get(
-    '/forms',
-    summary="Login Forms template",
-    description="Get the form template of the Task Manager App"
-)
-def get_forms_template() -> list[dict]:
-    """ """
-
-    try :
-        with open(settings.PROJECT_JSON_DIR / "loginForms.json", 'r') as json_file :
-            return json.load(json_file)
-        
-    except FileNotFoundError :
-        raise RessourceNotFoundException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            code="NOT_FOUND",
-            message="Resssource not found. Data on server not available or empty"
-        )
-
-
 # =========================================================
 # AUTHENTIFICATION
 # =========================================================

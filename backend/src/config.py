@@ -39,7 +39,7 @@ class Settings(BaseSettings) :
     DURATION_ATTEMPTS_SECONDS: int = Field(validation_alias='DURATION_ATTEMPTS_SECONDS')
 
     # Allow Origins
-    FRONTEND_URL:str = Field(validation_alias='FRONTEND_URL')
+    FRONTEND_URL:str = Field(validation_alias='FRONTEND_MAIN_URL')
 
     ROUT_PREFIX: str = "/api/v1"
 
