@@ -56,5 +56,8 @@ def get_countries(
 
     return CountryListResponse(
         success=True,
-        response=[SingleCountryResponse(id=country.id, name=country.name, abbr=country.abbr) for country in all_countries]
+        response=[
+                SingleCountryResponse(id=country.id, name=country.name, abbr=country.abbr)
+                    for country in all_countries
+                ]
     )
