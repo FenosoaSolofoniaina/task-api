@@ -9,7 +9,7 @@ from sqlalchemy.orm import Mapped
 from sqlalchemy.orm import mapped_column, relationship
 
 
-from src.database import Base
+from src.utilities.database import Base
 if TYPE_CHECKING :
     from .accounts import UserInfo
 

@@ -2,10 +2,10 @@ import json
 import datetime as dt
 from sqlalchemy.orm import Session
 
-from src.models import UserInfo, UserAccount, Country, UserRole, TaskData
 from src.config import settings
-from src.database import engine, Base
-from src.security import hash_password
+from src.models import UserInfo, UserAccount, Country, UserRole, TaskData
+from src.utilities.database import engine, Base
+from src.utilities.security import hash_password
 
 
 

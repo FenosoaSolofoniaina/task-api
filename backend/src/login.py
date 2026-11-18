@@ -1,18 +1,16 @@
-import json
 import uuid
-from typing import Annotated
+from typing import Annotated, Any
 from fastapi import APIRouter, Request, status, Response
 from fastapi import Depends
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session
+from pydantic import BaseModel, ConfigDict
 
 from src.config import settings
-from src.security import check_rate_limit, verify_password, create_access_token
-from src.exceptions import DataBaseException, RessourceNotFoundException, CredentialsException
 from src.models import UserAccount, UserSession
-from src.database import get_db_session
-
-from src.login.schema import LoginRequest, LoginResponse
+from src.utilities.security import check_rate_limit, verify_password, create_access_token
+from src.utilities.exceptions import DataBaseException, CredentialsException
+from src.utilities.database import get_db_session
 
 
 
@@ -22,30 +20,34 @@ login_router = APIRouter(
     tags=['Login']
 )
 
-# ============================================ ENDPOINTS ============================================ #
-# =========================================================
-# FORM STRUCTURE
-# =========================================================
-@login_router.get(
-    '/forms',
-    summary="Login Forms template",
-    description="Get the form template of the Task Manager App"
-)
-def get_forms_template() -> list[dict]:
+
+# ============================================ SCHEMAS ============================================ #
+# ================================================================================ #
+# Login account
+# ================================================================================ #
+class LoginRequest(BaseModel) :
     """ """
 
-    try :
-        with open(settings.PROJECT_JSON_DIR / "loginForms.json", 'r') as json_file :
-            return json.load(json_file)
-        
-    except FileNotFoundError :
-        raise RessourceNotFoundException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            code="NOT_FOUND",
-            message="Resssource not found. Data on server not available or empty"
-        )
+    model_config = ConfigDict(extra="forbid")
+
+    identity: str
+    password: str
 
 
+
+# ================================================================================ #
+# Response from login
+# ================================================================================ #
+class LoginResponse(BaseModel) :
+    """ """
+
+    success: bool = False
+    response: dict[str, Any] | None = None
+    error: dict[str, Any] | None = None
+
+
+
+# ============================================ ENDPOINTS ============================================ #
 # =========================================================
 # AUTHENTIFICATION
 # =========================================================

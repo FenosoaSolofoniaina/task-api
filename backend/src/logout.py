@@ -1,15 +1,14 @@
-from typing import Annotated
+from typing import Annotated, Any
 from fastapi import APIRouter, status, Response
 from fastapi import Depends
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
+from pydantic import BaseModel
 
 from src.models import UserSession
-from src.exceptions import DataBaseException
-from src.database import get_db_session
-from src.dependencies import get_current_session
-
-from src.logout.schema import LogoutResponse
+from src.utilities.exceptions import DataBaseException
+from src.utilities.database import get_db_session
+from src.utilities.dependencies import get_current_session
 
 
 
@@ -19,8 +18,21 @@ logout_router = APIRouter(
     tags=['Logout']
 )
 
-# ============================================ ENDPOINTS ============================================ #
 
+# ============================================ SCHEMAS ============================================ #
+# ================================================================================ #
+# Logout account
+# ================================================================================ #
+class LogoutResponse(BaseModel) :
+    """ """
+
+    success: bool = False
+    response: dict[str, Any] | None = None
+    error: dict[str, Any] | None = None
+
+
+
+# ============================================ ENDPOINTS ============================================ #
 # =========================================================
 # LOGOUT
 # =========================================================

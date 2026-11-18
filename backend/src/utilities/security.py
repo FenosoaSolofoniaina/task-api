@@ -6,7 +6,7 @@ from typing import Any
 from fastapi import Request, status
 
 from src.config import settings
-from src.exceptions import ClientBehaviourException
+from src.utilities.exceptions import ClientBehaviourException
 
 
 # =========================================================

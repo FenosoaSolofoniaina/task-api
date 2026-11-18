@@ -9,7 +9,7 @@ from sqlalchemy.orm import Mapped, Session
 from sqlalchemy.orm import mapped_column, relationship
 
 
-from src.database import Base
+from src.utilities.database import Base
 if TYPE_CHECKING :
     from .sessions import UserSession
     from .tasks import TaskData
