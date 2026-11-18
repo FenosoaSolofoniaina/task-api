@@ -1,17 +1,16 @@
 import uuid
-from typing import Annotated
+from typing import Annotated, Any
 from fastapi import APIRouter, Request, status, Response
 from fastapi import Depends
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session
+from pydantic import BaseModel, ConfigDict
 
 from src.config import settings
-from src.security import check_rate_limit, verify_password, create_access_token
-from src.exceptions import DataBaseException, CredentialsException
 from src.models import UserAccount, UserSession
-from src.database import get_db_session
-
-from src.login.schema import LoginRequest, LoginResponse
+from src.utilities.security import check_rate_limit, verify_password, create_access_token
+from src.utilities.exceptions import DataBaseException, CredentialsException
+from src.utilities.database import get_db_session
 
 
 
@@ -20,6 +19,33 @@ login_router = APIRouter(
     prefix='/login',
     tags=['Login']
 )
+
+
+# ============================================ SCHEMAS ============================================ #
+# ================================================================================ #
+# Login account
+# ================================================================================ #
+class LoginRequest(BaseModel) :
+    """ """
+
+    model_config = ConfigDict(extra="forbid")
+
+    identity: str
+    password: str
+
+
+
+# ================================================================================ #
+# Response from login
+# ================================================================================ #
+class LoginResponse(BaseModel) :
+    """ """
+
+    success: bool = False
+    response: dict[str, Any] | None = None
+    error: dict[str, Any] | None = None
+
+
 
 # ============================================ ENDPOINTS ============================================ #
 # =========================================================

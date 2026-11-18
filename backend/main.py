@@ -2,15 +2,15 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 
-from src.exceptions import APIException
 from src.config import settings
-from src.init_db import initialize_database
-from src.database import SessionLocal
+from src.utilities.exceptions import APIException
+from src.utilities.init_db import initialize_database
+from src.utilities.database import SessionLocal
 
-from src.register.routers import register_router
-from src.login.routers import login_router
-from src.tasks.routers import task_router
-from src.logout.routers import logout_router
+from src.register import register_router
+from src.login import login_router
+from src.logout import logout_router
+from src.utils import utils_router
 
 
 
@@ -56,20 +56,10 @@ def healthy() -> dict[str, str]:
     return { "message": "Everything is OK" }
 
 
-@app.get(
-    '/countries',
-    summary="/Get list of countries",
-    description="Get list of countries inside /jsons/countries.json",
-)
-def get_countries() -> dict[str, str]:
-    """ """
-
-    return { "message": "Everything is OK" }
-
 
 # ============================================ ROUTES ============================================ #
 prefix = settings.ROUT_PREFIX
 app.include_router(register_router, prefix=prefix)
 app.include_router(login_router, prefix=prefix)
-app.include_router(task_router, prefix=prefix)
 app.include_router(logout_router, prefix=prefix)
+app.include_router(utils_router, prefix=prefix)

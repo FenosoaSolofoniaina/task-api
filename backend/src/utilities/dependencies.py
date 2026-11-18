@@ -4,10 +4,10 @@ from fastapi import Depends, Cookie
 from sqlalchemy.orm import Session
 from jwt import InvalidTokenError, ExpiredSignatureError
 
-from src.database import get_db_session
 from src.models import UserSession
-from src.security import decode_access_token
-from src.exceptions import CredentialsException
+from src.utilities.database import get_db_session
+from src.utilities.security import decode_access_token
+from src.utilities.exceptions import CredentialsException
 
 
 
