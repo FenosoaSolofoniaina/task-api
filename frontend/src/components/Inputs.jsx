@@ -1,4 +1,4 @@
-export function CustomBlueInput({ id, type, label, title, value, required, onChange }) {
+export function CustomBlueInput({ id, type, label, title, value, required, errorMessage=null, onChange }) {
 
     return (
         <div className="flex flex-col items-start my-[1em]">
@@ -15,6 +15,7 @@ export function CustomBlueInput({ id, type, label, title, value, required, onCha
                     onChange={onChange}
                     required={required}
                     className="border rounded-[0.4em] border-[#086288] outline-none py-[0.4em] px-[0.8em] w-[100%] focus:border-[#4D8DBA] caret-[#4D8DBA]"/>
+            { errorMessage && <p className="text-[0.8em] font-medium text-[#FF0000]">{errorMessage}</p> }
         </div>
     )
 }

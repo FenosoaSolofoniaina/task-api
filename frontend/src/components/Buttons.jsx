@@ -23,3 +23,17 @@ export function CustomBlueButton({ title, onClick, children }) {
     );
 
 }
+
+
+export function CustomRedButton({ title, onClick, children }) {
+    
+    return (
+        <button type="button"
+                title={title}
+                onClick={onClick}
+                className="rounded-[0.4em] text-white bg-[#E63946] py-[0.4em] px-[0.8em] w-[100%] hover:bg-[#8B1E2D] click:bg-[#8B1E2D]" >
+            {children}
+        </button>
+    );
+
+}

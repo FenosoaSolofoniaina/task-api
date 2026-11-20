@@ -52,11 +52,11 @@ function renderFields(field, index) {
                     textLabel={field.text}
                     {...field.attributes} >
                     {
-                        field.options.map( option => <option key={option.key}
-                                                            value={option.value}
-                                                            name={option.name} >
+                        field.options.map( option => <option key={`country-${option.key}`}
+                                                             name={option.key}
+                                                             value={option.value} >
                                                         {option.text}
-                                                    </option>)
+                                                     </option>)
                     }
                 </CustomBlueSelect>
             );

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate, Navigate } from 'react-router';
 
 import { CustomH2MediumTitle } from "../components/Titles";
 
@@ -7,6 +8,8 @@ import { FooterLayout } from '../layouts/Footer';
 import { HeaderLayout } from '../layouts/Header';
 import { FormLayout } from "../layouts/Form";
 
+import getEnvData from "../config";
+
 
 
 function LoginPage() {
@@ -14,10 +17,17 @@ function LoginPage() {
 
     */
 
-    const [identity, setIdentity] = useState('');
-    const [password, setPassword] = useState('');
+    // ============================== STATES ============================== //
+    const settings = getEnvData();
+    const BACKEND_API_URL = settings.BACKEND_API_URL;
+    const LS_SESSION = settings.LS_SESSION;
+    
+    // ============================== STATES ============================== //
+    const [userLogin, setUserLogin] = useState({});
     const [showPassword, setShowPassword] = useState(false);
-
+    
+    // ============================== ============================== //
+    const navigate = useNavigate();
     const loginFormStructures = [
         {
             format: "input",
@@ -25,9 +35,9 @@ function LoginPage() {
                 id: "identity",
                 type: "text",
                 title: "Votre identifiant",
-                value: identity,
+                value: userLogin.identity || '',
                 required: true,
-                onChange: (e) => setIdentity(e.target.value),
+                onChange: (e) => setUserLogin({ ...userLogin, identity: e.target.value }),
             },
             text:"Identifiant"
         },
@@ -38,7 +48,7 @@ function LoginPage() {
                 type: !showPassword ? "password" : "text",
                 title: "Votre mot de passe",
                 required: true,
-                onChange: (e) => setPassword(e.target.value),
+                onChange: (e) => setUserLogin({ ...userLogin, password: e.target.value }),
             },
             text:"Mot de passe"
         },
@@ -68,8 +78,23 @@ function LoginPage() {
         */
 
         event.preventDefault();
-        console.log(`Try to find sign in with identity "${identity}" and password "${password}"`)
+        const response = await fetch(
+            `${BACKEND_API_URL}/api/v1/login`,
+            {
+                method: 'POST',
+                headers: { 'content-type': 'application/json' },
+                body: JSON.stringify(userLogin)
+            }
+        )
 
+        if(response.ok) {
+            let data = await response.json();
+
+            if(data.success) {
+                localStorage.setItem(LS_SESSION, data.response.sid);
+                navigate("/dashboard/id", { replace: true });
+            }
+        }
     }
 
 
@@ -101,6 +126,7 @@ function LoginPage() {
             </BodyLayout>
 
             <FooterLayout />
+
         </>
     );
 }
