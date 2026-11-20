@@ -69,6 +69,21 @@ class RegisterMeRequest(BaseModel) :
         return value
 
 
+    @field_validator("sexe")
+    @classmethod
+    def validate_sexe(cls,
+                        value: str) -> str:
+
+        if value not in ['M', 'F']:
+            raise DataValueException(
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                code="SEXE_VALUE_ERROR",
+                message=f"Only 'm' or 'f' value are accepted"
+            )
+
+        return value
+
+
 
 class RegisterAccountRequest(BaseModel) :
     """ """
